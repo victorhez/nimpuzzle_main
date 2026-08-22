@@ -1,0 +1,45 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: nimpuzzle
+      POSTGRES_PASSWORD: nimpuzzle
+      POSTGRES_DB: nimpuzzle
+    ports:
+      - "54329:5432"
+    volumes:
+      - nimpuzzle_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nimpuzzle -d nimpuzzle"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://nimpuzzle:nimpuzzle@postgres:5432/nimpuzzle
+      NIMIQ_NETWORK: TestAlbatross
+      NIMIQ_RPC_URL: https://rpc.nimiqwatch.com
+      NIMIQ_TREASURY_ADDRESS: NQ07 0000 0000 0000 0000 0000 0000 0000 0000
+      NIMIQ_ENTRY_NIM: 2
+      CRON_SECRET: local-docker-cron-secret
+      PLATFORM_FEE_BPS: 500
+      NIMIQ_LIVE_PAYMENTS: "false"
+      NEXT_PUBLIC_LIVE_PAYMENTS: "false"
+      NEXT_PUBLIC_NIMIQ_TREASURY_ADDRESS: NQ07 0000 0000 0000 0000 0000 0000 0000 0000
+      NIMIQ_PAYOUT_PRIVATE_KEY: ""
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+
+volumes:
+  nimpuzzle_pg:

@@ -1,0 +1,10 @@
+{
+  "name":"NimPuzzle",
+  "short_name":"NimPuzzle",
+  "description":"The daily NIM crypto word puzzle.",
+  "start_url":"/",
+  "display":"standalone",
+  "background_color":"#050609",
+  "theme_color":"#050609",
+  "icons":[]
+}
