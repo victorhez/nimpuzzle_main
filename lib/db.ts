@@ -1,9 +1,16 @@
 import postgres from 'postgres'
 
 let sql: ReturnType<typeof postgres> | null = null
+function resolveDatabaseUrl(): string {
+  const url = process.env.DATABASE_URL || process.env.POSTGRES_URL || process.env.NEON_DATABASE_URL
+  if (!url) throw new Error('DATABASE_URL is not configured (set DATABASE_URL or POSTGRES_URL)')
+  if (url.startsWith('postgres://') && !url.includes('sslmode')) {
+    return url.includes('?') ? `${url}&sslmode=require` : `${url}?sslmode=require`
+  }
+  return url
+}
 export function db() {
-  if (!process.env.DATABASE_URL) throw new Error('DATABASE_URL is not configured')
-  if (!sql) sql = postgres(process.env.DATABASE_URL, { max: 3, idle_timeout: 20, connect_timeout: 10, prepare: false })
+  if (!sql) sql = postgres(resolveDatabaseUrl(), { max: 3, idle_timeout: 20, connect_timeout: 10, prepare: false })
   return sql
 }
 
