@@ -10,20 +10,20 @@
     "check": "npm run typecheck"
   },
   "dependencies": {
+    "@nimiq/core": "^2.20.0",
     "@nimiq/mini-app-sdk": "^0.1.0",
     "next": "latest",
+    "postgres": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "postgres": "latest",
-    "zod": "latest",
-    "@nimiq/core": "latest"
+    "zod": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "typescript": "latest",
     "eslint": "latest",
-    "eslint-config-next": "latest"
+    "eslint-config-next": "latest",
+    "typescript": "latest"
   }
 }
