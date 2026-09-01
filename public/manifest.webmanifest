@@ -4,7 +4,7 @@
   "description":"The daily NIM crypto word puzzle.",
   "start_url":"/",
   "display":"standalone",
-  "background_color":"#050609",
-  "theme_color":"#050609",
+  "background_color":"#fffdf6",
+  "theme_color":"#f5c400",
   "icons":[]
 }
