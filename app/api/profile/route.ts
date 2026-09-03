@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
       totalGames: Number(totalGames[0]?.count || 0),
       totalWonNim: Number(profile.total_won_luna || 0) / 100_000,
       solvedCount: Number(profile.solved_count || 0),
-      activityDates: activity.map((row: { day: string }) => row.day),
+      activityDates: activity.map((row: any) => String(row.day)),
     })
   } catch (e) {
     console.error(e)

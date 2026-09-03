@@ -103,15 +103,33 @@ export default function Home(){
        {lastResult&&<Result result={lastResult} onShare={share} onPlay={startEntry}/>} 
        {!lastResult&&<section className="entry-card"><div className="entry-copy"><span className="mini-label">TODAY’S STAKE</span><strong>{daily?.entryNim} NIM</strong><p>Join the pool. Solve today’s word. Winners split 95% of the pool equally at day close.</p></div><button className="primary" onClick={canPlay?()=>setView('game'):startEntry} disabled={entryBusy||daily?.closed}>{daily?.closed?'CLOSED':entryBusy?'CONFIRMING…':canPlay?'CONTINUE PUZZLE':'PLAY FOR NIM'}</button><small>Word length: {daily?.wordLength} letters · 6 attempts</small></section>}
        <section className="guide-card">
-         <div className="page-title"><span className="mini-label">HOW TO PLAY</span><h1>Rules of the daily puzzle</h1></div>
+         <div className="page-title"><span className="mini-label">HOW TO PLAY</span><h1>NimPuzzle for beginners</h1></div>
+         <p className="guide-intro">Every day has one hidden word. You get six chances to guess it correctly. Every player is trying to solve the same puzzle, and the prize pool grows as more people stake in.</p>
          <div className="guide-grid">
-           <GuideStep n="01" title="Connect wallet" text="Use your Nimiq wallet to enter the daily challenge with the required 1250 NIM stake."/>
-           <GuideStep n="02" title="Make a guess" text="Type a valid word matching the day’s length. Colour feedback shows what is correct, misplaced, or missing."/>
-           <GuideStep n="03" title="Win the pool" text="Solve the word before six attempts end. Winners split the prize pool at day close."/>
-           <GuideStep n="04" title="Build streaks" text="Play daily to push your current streak higher and keep your wallet profile active across the calendar."/>
+           <GuideStep n="01" title="Enter the daily game" text="Connect a Nimiq wallet and stake the entry amount. The minimum required entry is 1250 NIM. Once accepted, your wallet is entered for that day’s puzzle."/>
+           <GuideStep n="02" title="Guess a valid word" text="Type a real word with the exact number of letters for the puzzle. The game accepts only valid letters, and it matches the hidden answer for that date."/>
+           <GuideStep n="03" title="Read the colour clues" text="After each guess, the tiles light up. Green means the letter is correct and in the right place. Yellow means it exists somewhere else in the word. Grey means it is not in the word at all."/>
+           <GuideStep n="04" title="Solve before six tries" text="You have only six attempts. If you solve it, you win your share of the daily pool. If you miss it, you can try again tomorrow with a fresh word and a fresh chance."/>
+           <GuideStep n="05" title="Build streaks" text="Each day you play counts toward your activity. A streak keeps growing when you keep coming back on consecutive days, which also shows up in your wallet profile and activity calendar."/>
+           <GuideStep n="06" title="Win the pool" text="Winners split 95% of the prize pool, and the rest covers platform fees. A wallet with a longer streak and steady activity is easier to track in the leaderboard and profile calendar."/>
+         </div>
+         <div className="legend-panel">
+           <div className="legend-title">Colour key</div>
+           <div className="legend-row"><span className="legend-box green"/> <strong>Green</strong> = correct letter in the correct spot</div>
+           <div className="legend-row"><span className="legend-box yellow"/> <strong>Yellow</strong> = correct letter, wrong spot</div>
+           <div className="legend-row"><span className="legend-box grey"/> <strong>Grey</strong> = letter is not in the answer</div>
          </div>
        </section>
-       {profile&&<StreakCalendar dates={profile.activityDates || []} currentStreak={profile.currentStreak || 0} bestStreak={profile.bestStreak || 0} wallet={wallet || DEMO_WALLET}/>} 
+       <section className="mini-profile-card">
+         <div className="page-title compact"><span className="mini-label">WALLET PROFILE</span><h2>{wallet ? `${wallet.slice(0,8)}…${wallet.slice(-6)}` : 'Connect wallet'}</h2></div>
+         <div className="mini-profile-grid">
+           <div className="mini-stat"><label>Current streak</label><strong>{profile?.currentStreak || 0} days</strong></div>
+           <div className="mini-stat"><label>Best streak</label><strong>{profile?.bestStreak || 0} days</strong></div>
+           <div className="mini-stat"><label>Total games</label><strong>{profile?.totalGames || 0}</strong></div>
+           <div className="mini-stat"><label>Rewards</label><strong>{profile ? Number(profile.totalWonNim || 0).toFixed(2) : '0.00'} NIM</strong></div>
+         </div>
+       </section>
+       {profile && <StreakCalendar dates={profile.activityDates || []} currentStreak={profile.currentStreak || 0} bestStreak={profile.bestStreak || 0} wallet={wallet || DEMO_WALLET}/>} 
        <footer><span>NIMPUZZLE · BUILT FOR NIMIQ PAY</span><span>NO AUDIO · MOBILE FIRST · ONE WORD / DAY</span></footer>
      </>}
    </div>
