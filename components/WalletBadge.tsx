@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { connectNimiq } from '@/lib/nimiq'
 
-export function WalletBadge({ onConnected }: { onConnected: (address:string)=>void }) {
+export function WalletBadge({ onConnected, onProfile }: { onConnected: (address:string)=>void; onProfile: ()=>void }) {
   const [address,setAddress]=useState('')
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
@@ -13,7 +13,7 @@ export function WalletBadge({ onConnected }: { onConnected: (address:string)=>vo
     finally{setBusy(false)}
   }
   return <div className="wallet-wrap">
-    {address ? <div className="wallet-chip"><span className="dot"/> {address.slice(0,8)}…{address.slice(-6)}</div> : <button className="ghost-btn" onClick={connect} disabled={busy}>{busy?'Connecting…':'Connect Nimiq'}</button>}
+    {address ? <button className="profile-avatar" onClick={onProfile} aria-label="Open NimiqPlayer profile" title="Open profile">NP</button> : <button className="ghost-btn" onClick={connect} disabled={busy}>{busy?'Connecting…':'Connect Nimiq'}</button>}
     {error && <small className="error">{error}</small>}
   </div>
 }
