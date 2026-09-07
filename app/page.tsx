@@ -91,7 +91,7 @@ export default function Home(){
  const progress=useMemo(()=>daily?`${attemptsUsed}/6`: '—',[daily,attemptsUsed])
 
  return <main className="shell">
-  <header className="topbar"><div className="brand" onClick={()=>setView('home')}><Image src="/logo.png" alt="NimPuzzle logo" width={42} height={42} className="brand-logo" priority /><div><b>NimPuzzle</b><span>DAILY NIM CHALLENGE</span></div></div><WalletBadge onConnected={setWallet} onProfile={openProfile}/></header>
+  <header className="topbar"><div className="brand" onClick={()=>setView('home')}><Image src="/logo.png" alt="NimPuzzle logo" width={42} height={42} className="brand-logo" priority /><div><b>NimPuzzle</b><span>DAILY NIM CHALLENGE</span></div></div><WalletBadge wallet={wallet||undefined} onConnected={setWallet} onProfile={openProfile} onHistory={openHistory} onLeaderboard={openBoard}/></header>
    <div className="content">
      <nav className="nav"><button className={view==='home'?'active':''} onClick={()=>setView('home')}>Today</button><button className={view==='leaderboard'?'active':''} onClick={openBoard}>Leaderboard</button><button className={view==='history'?'active':''} onClick={openHistory}>History</button><button className={view==='profile'?'active':''} onClick={openProfile}>Profile</button></nav>
      {loading?<div className="loader">Loading today’s puzzle…</div>:view==='leaderboard'?<Leaderboard data={leader}/>:view==='history'?<History rows={history}/>:view==='profile'?<ProfileScreen profile={profile} wallet={wallet||DEMO_WALLET}/>:view==='game'&&daily?<Game daily={daily} current={current} keyStates={keyStates} attempts={progress} onKey={handleKey} onEnter={submitGuess} onBackspace={back} disabled={gameOver}/>:<>
@@ -147,8 +147,65 @@ function Result({result,onShare,onPlay}:{result:any;onShare:()=>void;onPlay:()=>
 function Game({daily,current,keyStates,attempts,onKey,onEnter,onBackspace,disabled}:{daily:Daily;current:string;keyStates:Record<string,KeyState>;attempts:string;onKey:(k:string)=>void;onEnter:()=>void;onBackspace:()=>void;disabled:boolean}){return <section className="game"><div className="game-head"><div><span className="mini-label">DAILY PUZZLE</span><h2>{daily.wordLength} letters · {attempts} attempts</h2></div><div className="pool-pill">{daily.poolNim.toFixed(2)} NIM pool</div></div><PuzzleGrid length={daily.wordLength} guesses={daily.guesses.map(g=>({...g,result:JSON.parse(g.result)}))} current={current}/><Keyboard states={keyStates} onKey={onKey} onEnter={onEnter} onBackspace={onBackspace} disabled={disabled}/><p className="hint">ENTER to submit · BACKSPACE to erase</p></section>}
 function Leaderboard({data}:{data:any}){return <section className="board"><div className="page-title"><span className="mini-label">THE DAILY RACE</span><h1>Leaderboard</h1><p>Fastest solves rise to the top. Long streaks dominate the weekly board.</p></div><div className="board-grid"><BoardTable title="TODAY" rows={data.daily} keyName="guesses" suffix=" guesses"/><BoardTable title="WEEKLY STREAK" rows={data.weekly} keyName="streak" suffix=" days 🔥"/></div></section>}
 function BoardTable({title,rows,keyName,suffix}:{title:string;rows:any[];keyName:string;suffix:string}){return <div className="table-card"><div className="table-title">{title}</div>{rows.length?rows.map((r,i)=><div className="rank-row" key={r.wallet}><b>#{i+1}</b><span>{r.wallet.slice(0,7)}…{r.wallet.slice(-4)}</span><strong>{r[keyName]}{suffix}</strong></div>):<div className="empty">No scores yet. Be first.</div>}</div>}
-function History({rows}:{rows:any[]}){return <section className="board"><div className="page-title"><span className="mini-label">YOUR RECORD</span><h1>History</h1><p>Every attempt, every solve, every streak.</p></div><div className="table-card wide">{rows.length?rows.map((r,i)=><div className="history-row" key={`${r.puzzle_date}-${r.attempt}-${i}`}><span>{new Date(r.puzzle_date).toLocaleDateString()}</span><b>{r.guess.toUpperCase()}</b><span>{r.attempt}/6</span><span>{r.result.includes('green')?'Solved':'Played'}</span></div>):<div className="empty">No games recorded yet.</div>}</div></section>}
-function ProfileScreen({profile,wallet}:{profile:any;wallet:string}){if(!profile){return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>Connect your wallet so your daily streak and activity calendar can appear here.</p></div></section>}
+function History({rows}:{rows:any[]}){
+  type GameGroup = {date:string;guesses:any[];solved:boolean;solveAttempt:number|null;word:string|null}
+  const grouped: Record<string,GameGroup> = {}
+  rows.forEach((r)=>{
+    const d = r.puzzle_date
+    if(!grouped[d]) grouped[d] = {date:d,guesses:[],solved:false,solveAttempt:null,word:null}
+    grouped[d].guesses.push(r)
+    let tiles: string[] = []
+    try { tiles = JSON.parse(r.result) } catch {}
+    const allGreen = tiles.length > 0 && tiles.every(t=>t==='green')
+    if(allGreen && !grouped[d].solved){
+      grouped[d].solved = true
+      grouped[d].solveAttempt = r.attempt
+      grouped[d].word = r.guess
+    }
+  })
+  const games = Object.values(grouped).sort((a,b)=>b.date.localeCompare(a.date))
+  return <section className="board"><div className="page-title"><span className="mini-label">YOUR RECORD</span><h1>History</h1><p>Every attempt, every solve, every streak.</p></div>
+  {games.length === 0 ? <div className="table-card wide"><div className="empty">No games recorded yet. Play your first daily puzzle to start building your history!</div></div> :
+  <div className="table-card wide history-games">
+    {games.map((g)=>{
+      const dateLabel = new Date(g.date).toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})
+      const attempts = g.guesses.length
+      return <div key={g.date} className="history-game">
+        <div className="history-game-head">
+          <div>
+            <div className="history-date">{dateLabel}</div>
+            <div className="history-meta">
+              <span className="history-tag attempts">{attempts}/6 attempt{attempts===1?'':'s'}</span>
+              {g.solved ? <span className="history-tag solved">✓ Solved</span> : <span className="history-tag played">Played</span>}
+              {g.solved && g.solveAttempt && <span className="history-tag in">{attempts<=3?'🔥':'Good'} in {g.solveAttempt}</span>}
+            </div>
+          </div>
+          {g.solved && g.word && <div className="history-word">{g.word.toUpperCase()}</div>}
+        </div>
+        <div className="history-guesses">
+          {g.guesses.map((gr)=>{
+            let tiles: string[] = []
+            try { tiles = JSON.parse(gr.result) } catch {}
+            return <div className="history-guess-row" key={gr.attempt}>
+              <span className="history-attempt-num">#{gr.attempt}</span>
+              <div className="history-mini-grid">
+                {gr.guess.split('').map((ch:string,i:number)=>(
+                  <span key={i} className={`mini-tile ${tiles[i]||'idle'}`}>{ch.toUpperCase()}</span>
+                ))}
+              </div>
+            </div>
+          })}
+        </div>
+      </div>
+    })}
+  </div>}
+  </section>
+}
+function ProfileScreen({profile,wallet}:{profile:any;wallet:string}){
+  const isDemo = wallet === 'NQ-DEMO-NIMPUZZLE-PLAYER-2026'
+  if(!profile){
+    return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>{isDemo || wallet ? 'Loading your profile data…' : 'Connect your wallet so your daily streak and activity calendar can appear here.'}</p></div><div className="loader">Loading profile…</div></section>
+  }
   const xp=profile.xp || 0
   const achievements=profile.achievements || []
   return <section className="profile-page"><div className="profile-hero"><div className="profile-avatar large">NP</div><div><span className="mini-label">PLAYER PROFILE</span><h1>NimiqPlayer</h1><p className="wallet-id">{wallet}</p></div></div><div className="profile-grid"><div className="profile-card"><div className="profile-section-title">Player details</div><div className="profile-stats"><div><label>NIM balance</label><strong>{profile.balanceNim === null ? 'Unavailable' : `${Number(profile.balanceNim || 0).toFixed(2)} NIM`}</strong></div><div><label>XP</label><strong>{xp}</strong></div><div><label>Current streak</label><strong>{profile.currentStreak || 0} days</strong></div><div><label>Best streak</label><strong>{profile.bestStreak || 0} days</strong></div><div><label>Games played</label><strong>{profile.totalGames || 0}</strong></div><div><label>Rewards earned</label><strong>{Number(profile.totalWonNim || 0).toFixed(2)} NIM</strong></div></div></div><div className="profile-card achievements"><div className="profile-section-title">Achievements</div>{achievements.length ? <div className="achievement-list">{achievements.map((achievement:string)=><div className="achievement" key={achievement}><span>★</span>{achievement}</div>)}</div> : <p className="empty">Play your first game to unlock achievements.</p>}</div></div><StreakCalendar dates={profile.activityDates || []} currentStreak={profile.currentStreak || 0} bestStreak={profile.bestStreak || 0} wallet={wallet}/></section>}
