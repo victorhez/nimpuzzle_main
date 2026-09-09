@@ -25,6 +25,8 @@ export default function Home(){
  const [leader,setLeader]=useState<any>({daily:[],weekly:[]})
  const [history,setHistory]=useState<any[]>([])
  const [profile,setProfile]=useState<any>(null)
+ const [profileError,setProfileError]=useState('')
+ const [profileLoading,setProfileLoading]=useState(false)
 
  const load=useCallback(async(addr?:string)=>{
    setLoading(true)
@@ -33,7 +35,14 @@ export default function Home(){
  const loadProfile=useCallback(async(addr?:string)=>{
    const active=addr || wallet
    if(!active) return
-   try{const r=await fetch(`/api/profile?wallet=${encodeURIComponent(active)}`,{cache:'no-store'});const j=await r.json();if(j.ok)setProfile(j)}catch{}
+   setProfileLoading(true);setProfileError('')
+   try{
+     const r=await fetch(`/api/profile?wallet=${encodeURIComponent(active)}`,{cache:'no-store'})
+     const j=await r.json()
+     if(j.ok){setProfile(j);setProfileError('')}
+     else{setProfileError(j.error||'Profile data unavailable.')}
+   }catch{setProfileError('Network error loading profile.')}
+   finally{setProfileLoading(false)}
  },[wallet])
  useEffect(()=>{load()},[load])
  useEffect(()=>{if(wallet) load(wallet)},[wallet,load])
@@ -55,7 +64,7 @@ export default function Home(){
      const r=await fetch('/api/enter',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({wallet:addr,txHash})})
      const j=await r.json();if(!j.ok)throw new Error(j.error)
      setMessage(j.demo?'Demo entry active — no real NIM was moved.':'Entry confirmed on Nimiq.')
-     await load(addr);setView('game')
+     await Promise.all([load(addr),loadProfile(addr)]);setView('game')
    }catch(e){setMessage(e instanceof Error?e.message:'Could not enter')}finally{setEntryBusy(false)}
  }
 
@@ -69,7 +78,7 @@ export default function Home(){
    setKeyStates(prev=>{const next={...prev};current.split('').forEach((ch,i)=>{const k=ch.toUpperCase();const tile=result[i] as KeyState;const rank:Record<KeyState,number>={idle:0,grey:1,yellow:2,green:3};if(!next[k]||rank[tile] > rank[next[k]])next[k]=tile});return next})
    setCurrent('')
    setLastResult({solved:j.solved,answer:j.answer,attempt:j.attempt,pattern:j.pattern,streak:j.streak,share:j.estimatedShareNim})
-   if(j.solved||j.failed){setGameOver(true);setView('home');await load(wallet||DEMO_WALLET)}
+   if(j.solved||j.failed){setGameOver(true);setView('home');await Promise.all([load(wallet||DEMO_WALLET),loadProfile(wallet||DEMO_WALLET)])}
  }
  const handleKey=(k:string)=>{if(!daily||gameOver)return;setMessage('');if(current.length<daily.wordLength)setCurrent(v=>v+k.toLowerCase())}
  const back=()=>setCurrent(v=>v.slice(0,-1))
@@ -80,10 +89,14 @@ export default function Home(){
  const openProfile=async()=>{
    const addr=wallet
    if(!addr){setMessage('Connect your Nimiq wallet to open your profile.'); return}
-   const r=await fetch(`/api/profile?wallet=${encodeURIComponent(addr)}`)
-   const j=await r.json()
-   if(j.ok)setProfile(j)
-   setView('profile')
+   setProfileLoading(true);setProfileError('')
+   try{
+     const r=await fetch(`/api/profile?wallet=${encodeURIComponent(addr)}`)
+     const j=await r.json()
+     if(j.ok){setProfile(j);setView('profile')}
+     else{setMessage(j.error||'Could not load profile data.');setProfileError(j.error||'Profile unavailable.')}
+   }catch{setMessage('Network error. Could not open profile.');setProfileError('Network error loading profile.')}
+   finally{setProfileLoading(false)}
  }
  const share=()=>{if(!lastResult)return;const text=`NimPuzzle ${lastResult.solved?'🏆':'🧩'} ${lastResult.attempt}/6\n${lastResult.pattern}\n${lastResult.solved?`Streak: ${lastResult.streak} 🔥`: 'Back tomorrow.'}\n\n#NimPuzzle #Nimiq #Web3` ;window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,'_blank','noopener,noreferrer')}
  const attemptsUsed=daily?.guesses.length||0
@@ -94,7 +107,7 @@ export default function Home(){
   <header className="topbar"><div className="brand" onClick={()=>setView('home')}><Image src="/logo.png" alt="NimPuzzle logo" width={42} height={42} className="brand-logo" priority /><div><b>NimPuzzle</b><span>DAILY NIM CHALLENGE</span></div></div><WalletBadge wallet={wallet||undefined} onConnected={setWallet} onProfile={openProfile} onHistory={openHistory} onLeaderboard={openBoard}/></header>
    <div className="content">
      <nav className="nav"><button className={view==='home'?'active':''} onClick={()=>setView('home')}>Today</button><button className={view==='leaderboard'?'active':''} onClick={openBoard}>Leaderboard</button><button className={view==='history'?'active':''} onClick={openHistory}>History</button><button className={view==='profile'?'active':''} onClick={openProfile}>Profile</button></nav>
-     {loading?<div className="loader">Loading today’s puzzle…</div>:view==='leaderboard'?<Leaderboard data={leader}/>:view==='history'?<History rows={history}/>:view==='profile'?<ProfileScreen profile={profile} wallet={wallet||DEMO_WALLET}/>:view==='game'&&daily?<Game daily={daily} current={current} keyStates={keyStates} attempts={progress} onKey={handleKey} onEnter={submitGuess} onBackspace={back} disabled={gameOver}/>:<>
+     {loading?<div className="loader">Loading today's puzzle…</div>:view==='leaderboard'?<Leaderboard data={leader}/>:view==='history'?<History rows={history}/>:view==='profile'?<ProfileScreen profile={profile} wallet={wallet||DEMO_WALLET} loading={profileLoading} error={profileError}/>:view==='game'&&daily?<Game daily={daily} current={current} keyStates={keyStates} attempts={progress} onKey={handleKey} onEnter={submitGuess} onBackspace={back} disabled={gameOver}/>:<>
        <section className="hero">
          <div className="eyebrow"><span className="live-dot"/> DAILY CHALLENGE · {daily?.date}</div>
          <h1>Guess the word.<br/><em>Win the pool.</em></h1>
@@ -201,10 +214,16 @@ function History({rows}:{rows:any[]}){
   </div>}
   </section>
 }
-function ProfileScreen({profile,wallet}:{profile:any;wallet:string}){
+function ProfileScreen({profile,wallet,loading,error}:{profile:any;wallet:string;loading?:boolean;error?:string}){
   const isDemo = wallet === 'NQ-DEMO-NIMPUZZLE-PLAYER-2026'
+  if(loading && !profile){
+    return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>Loading your profile data…</p></div><div className="loader">Loading profile…</div></section>
+  }
+  if(error){
+    return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>{isDemo ? 'Using demo wallet — connect your Nimiq wallet for full profile access.' : 'There was a problem loading your profile.'}</p></div><div className="notice error">{error}</div></section>
+  }
   if(!profile){
-    return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>{isDemo || wallet ? 'Loading your profile data…' : 'Connect your wallet so your daily streak and activity calendar can appear here.'}</p></div><div className="loader">Loading profile…</div></section>
+    return <section className="board"><div className="page-title"><span className="mini-label">YOUR PROFILE</span><h1>Wallet profile</h1><p>{wallet ? 'No profile data yet. Play a game to start building your stats.' : 'Connect your wallet so your daily streak and activity calendar can appear here.'}</p></div>{!wallet && <div className="notice">Connect your Nimiq wallet to view your profile.</div>}</section>
   }
   const xp=profile.xp || 0
   const achievements=profile.achievements || []

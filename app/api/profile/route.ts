@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     const wallet = normalizeWallet(raw)
 
     const player = await q`SELECT current_streak, best_streak, total_won_luna, solved_count FROM players WHERE wallet=${wallet}`
-    const totalGames = await q`SELECT COUNT(*)::int AS count FROM guesses WHERE wallet=${wallet}`
+    const totalGames = await q`SELECT COUNT(DISTINCT puzzle_date)::int AS count FROM guesses WHERE wallet=${wallet}`
     const activity = await q`SELECT DISTINCT puzzle_date::text AS day FROM guesses WHERE wallet=${wallet} ORDER BY puzzle_date DESC LIMIT 365`
     let balanceNim: number | null = null
     try {
