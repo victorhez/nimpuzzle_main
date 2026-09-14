@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { connectNimiq } from '@/lib/nimiq'
 
-export function WalletBadge({ wallet, onConnected, onProfile, onHistory, onLeaderboard }: { wallet?: string; onConnected: (address:string)=>void; onProfile: ()=>void; onHistory?: ()=>void; onLeaderboard?: ()=>void }) {
+export function WalletBadge({ wallet, balanceNim, onConnected, onProfile, onHistory, onLeaderboard }: { wallet?: string; balanceNim?: number | null; onConnected: (address:string)=>void; onProfile: ()=>void; onHistory?: ()=>void; onLeaderboard?: ()=>void }) {
   const [address,setAddress]=useState('')
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState('')
@@ -43,6 +43,10 @@ export function WalletBadge({ wallet, onConnected, onProfile, onHistory, onLeade
               <div className="dropdown-wallet-info">
                 <div className="dropdown-wallet-label">Connected wallet</div>
                 <div className="dropdown-wallet-address" title={address}>{short}</div>
+                <div className="dropdown-wallet-balance">
+                  <span className="dropdown-balance-label">BALANCE</span>
+                  <span className="dropdown-balance-value">{balanceNim !== undefined && balanceNim !== null ? `${Number(balanceNim).toFixed(2)} NIM` : '— NIM'}</span>
+                </div>
               </div>
             </div>
             <div className="dropdown-divider"/>

@@ -104,9 +104,9 @@ export default function Home(){
  const progress=useMemo(()=>daily?`${attemptsUsed}/6`: '—',[daily,attemptsUsed])
 
  return <main className="shell">
-  <header className="topbar"><div className="brand" onClick={()=>setView('home')}><Image src="/logo.png" alt="NimPuzzle logo" width={42} height={42} className="brand-logo" priority /><div><b>NimPuzzle</b><span>DAILY NIM CHALLENGE</span></div></div><WalletBadge wallet={wallet||undefined} onConnected={setWallet} onProfile={openProfile} onHistory={openHistory} onLeaderboard={openBoard}/></header>
+  <header className="topbar"><div className="brand" onClick={()=>setView('home')}><Image src="/logo.png" alt="NimPuzzle logo" width={42} height={42} className="brand-logo" priority /><div><b>NimPuzzle</b><span>DAILY NIM CHALLENGE</span></div></div><WalletBadge wallet={wallet||undefined} balanceNim={profile?.balanceNim} onConnected={setWallet} onProfile={openProfile} onHistory={openHistory} onLeaderboard={openBoard}/></header>
    <div className="content">
-     <nav className="nav"><button className={view==='home'?'active':''} onClick={()=>setView('home')}>Today</button><button className={view==='leaderboard'?'active':''} onClick={openBoard}>Leaderboard</button><button className={view==='history'?'active':''} onClick={openHistory}>History</button><button className={view==='profile'?'active':''} onClick={openProfile}>Profile</button></nav>
+     <nav className="nav"><button className={view==='home'?'active':''} onClick={()=>setView('home')}>Today</button><button className={view==='leaderboard'?'active':''} onClick={openBoard}>Leaderboard</button><button className={view==='history'?'active':''} onClick={openHistory}>History</button></nav>
      {loading?<div className="loader">Loading today's puzzle…</div>:view==='leaderboard'?<Leaderboard data={leader}/>:view==='history'?<History rows={history}/>:view==='profile'?<ProfileScreen profile={profile} wallet={wallet||DEMO_WALLET} loading={profileLoading} error={profileError}/>:view==='game'&&daily?<Game daily={daily} current={current} keyStates={keyStates} attempts={progress} onKey={handleKey} onEnter={submitGuess} onBackspace={back} disabled={gameOver}/>:<>
        <section className="hero">
          <div className="eyebrow"><span className="live-dot"/> DAILY CHALLENGE · {daily?.date}</div>
