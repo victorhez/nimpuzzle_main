@@ -95,38 +95,6 @@ NIMIQ_PAYOUT_PRIVATE_KEY=<dedicated-hot-wallet-private-key>
 
 Use a dedicated treasury/hot wallet with only the amount needed for operating the competition. Rotate it after the competition if appropriate. Never put the private key in GitHub, `.env.example`, frontend code, screenshots, logs, or issue comments.
 
-## Vercel deployment
-
-```bash
-npm i -g vercel
-vercel login
-vercel
-```
-
-Create/link the Vercel project, then add the production environment variables in Vercel Project Settings → Environment Variables.
-
-Deploy:
-
-```bash
-vercel --prod
-```
-
-The included `vercel.json` registers:
-
-```json
-{"crons":[{"path":"/api/cron/settle","schedule":"0 0 * * *"}]}
-```
-
-The cron runs at UTC midnight and settles the previous UTC puzzle. For Vercel plans where cron execution limits apply, keep the daily solver count reasonable or move the payout worker to a dedicated worker service.
-
-## Submission / Mini App URL
-
-After deployment, the app can be opened as a Mini App using Nimiq Pay's HTTPS deep-link format:
-
-`https://nimpay.app/miniapps/open/YOUR_DOMAIN`
-
-Use the exact deployed domain in your competition submission.
-
 ## Security model
 
 - The daily answer is selected server-side and is never returned by `/api/daily` before reveal.
