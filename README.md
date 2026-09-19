@@ -161,6 +161,24 @@ Use the exact deployed domain in your competition submission.
 - [x] Payout queue + optional dedicated hot-wallet sender
 - [x] Vercel deployment configuration
 
-## Before submission
+MIT License
 
-Do a real TestAlbatross run from Nimiq Pay. Confirm the transaction appears on-chain, confirm the server accepts only the correct amount/recipient/sender, play all six attempts, solve a puzzle, test the share button, test duplicate entry rejection, run the cron endpoint manually with the cron secret, and verify the payout queue. Only then switch to MainAlbatross.
+Copyright (c) 2026 NimPuzzle
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
